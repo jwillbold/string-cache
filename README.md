@@ -7,9 +7,6 @@ A fork of [Servo](https://github.com/servo/servo)'s string cache library. Each s
 In `Cargo.toml`:
 
 ```toml
-[dependencies]
-unicase_string_cache = "*"
-
 [dependencies.unicase_string_cache]
 git = "https://github.com/jwillbold/string-cache.git"
 ```
