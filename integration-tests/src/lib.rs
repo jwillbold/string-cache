@@ -16,7 +16,7 @@
 extern crate test;
 
 use std::thread;
-use string_cache::StaticAtomSet;
+use unicase_string_cache::StaticAtomSet;
 
 include!(concat!(env!("OUT_DIR"), "/test_atom.rs"));
 pub type Atom = TestAtom;
@@ -32,14 +32,14 @@ fn test_as_slice() {
     let i0 = Atom::from("blah");
     assert!(i0.as_ref() == "blah");
 
-    let s0 = Atom::from("BLAH");
-    assert!(s0.as_ref() == "BLAH");
-
-    let d0 = Atom::from("zzzzzzzzzz");
-    assert!(d0.as_ref() == "zzzzzzzzzz");
-
-    let d1 = Atom::from("ZZZZZZZZZZ");
-    assert!(d1.as_ref() == "ZZZZZZZZZZ");
+    // let s0 = Atom::from("BLAH");
+    // assert!(s0.as_ref() == "BLAH");
+    //
+    // let d0 = Atom::from("zzzzzzzzzz");
+    // assert!(d0.as_ref() == "zzzzzzzzzz");
+    //
+    // let d1 = Atom::from("ZZZZZZZZZZ");
+    // assert!(d1.as_ref() == "ZZZZZZZZZZ");
 }
 
 #[test]
@@ -73,6 +73,21 @@ fn test_equality() {
     let d1 = Atom::from("zzzzzzzz");
     let d2 = Atom::from("zzzzzzzzz");
 
+    // unicase static
+    let us0 = Atom::from("ascii");
+    let us1 = Atom::from("ASCII");
+    let us2 = Atom::from("UTFYY");
+
+    // unciase inline
+    let ui0 = Atom::from("unicase");
+    let ui1 = Atom::from("UniCase");
+    let ui2 = Atom::from("LolCase");
+
+    // unicase dynamic
+    let ud0 = Atom::from("uniunicase");
+    let ud1 = Atom::from("UniUniCase");
+    let ud2 = Atom::from("NotUniCase");
+
     assert!(s0 == s1);
     assert!(s0 != s2);
 
@@ -81,6 +96,15 @@ fn test_equality() {
 
     assert!(d0 == d1);
     assert!(d0 != d2);
+
+    assert!(us0 == us1);
+    assert!(us0 != us2);
+
+    assert!(ui0 == ui1);
+    assert!(ui0 != ui2);
+
+    assert!(ud0 == ud1);
+    assert!(ud0 != ud2);
 
     assert!(s0 != i0);
     assert!(s0 != d0);
@@ -195,6 +219,7 @@ fn test_threads() {
 fn atom_macro() {
     assert_eq!(test_atom!("body"), Atom::from("body"));
     assert_eq!(test_atom!("font-weight"), Atom::from("font-weight"));
+    assert_eq!(test_atom!("ascii"), Atom::from("ASCiI"));
 }
 
 #[test]
@@ -221,6 +246,15 @@ fn match_atom() {
         3,
         match Atom::from("zzzzzz") {
             test_atom!("br") => 1,
+            test_atom!("html") | test_atom!("head") => 2,
+            _ => 3,
+        }
+    );
+
+    assert_eq!(
+        1,
+        match Atom::from("Ascii") { //ASCiI
+            test_atom!("ascii") => 1,
             test_atom!("html") | test_atom!("head") => 2,
             _ => 3,
         }
@@ -267,22 +301,6 @@ fn test_ascii_uppercase() {
         Atom::from("Je vais à Paris").to_ascii_uppercase(),
         Atom::from("JE VAIS à PARIS")
     );
-}
-
-#[test]
-fn test_eq_ignore_ascii_case() {
-    assert!(Atom::from("").eq_ignore_ascii_case(&Atom::from("")));
-    assert!(Atom::from("aZ9").eq_ignore_ascii_case(&Atom::from("aZ9")));
-    assert!(Atom::from("aZ9").eq_ignore_ascii_case(&Atom::from("Az9")));
-    assert!(Atom::from("The Quick Brown Fox!")
-        .eq_ignore_ascii_case(&Atom::from("THE quick BROWN fox!")));
-    assert!(Atom::from("Je vais à Paris").eq_ignore_ascii_case(&Atom::from("je VAIS à PARIS")));
-    assert!(!Atom::from("").eq_ignore_ascii_case(&Atom::from("az9")));
-    assert!(!Atom::from("aZ9").eq_ignore_ascii_case(&Atom::from("")));
-    assert!(!Atom::from("aZ9").eq_ignore_ascii_case(&Atom::from("9Za")));
-    assert!(!Atom::from("The Quick Brown Fox!")
-        .eq_ignore_ascii_case(&Atom::from("THE quick BROWN fox!!")));
-    assert!(!Atom::from("Je vais à Paris").eq_ignore_ascii_case(&Atom::from("JE vais À paris")));
 }
 
 #[test]

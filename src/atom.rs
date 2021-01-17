@@ -171,19 +171,27 @@ impl<Static: StaticAtomSet> Hash for Atom<Static> {
 impl<'a, Static: StaticAtomSet> From<Cow<'a, str>> for Atom<Static> {
     fn from(string_to_add: Cow<'a, str>) -> Self {
         let static_set = Static::get();
-        let hash = phf_shared::hash(&*string_to_add, &static_set.key);
+        let hash = phf_shared::hash(&unicase::UniCase::ascii(&*string_to_add), &static_set.key);
         let index = phf_shared::get_index(&hash, static_set.disps, static_set.atoms.len());
 
-        if static_set.atoms[index as usize] == string_to_add {
+        if unicase::eq_ascii(static_set.atoms[index as usize], &string_to_add) {
             Self::pack_static(index)
         } else {
             let len = string_to_add.len();
             if len <= MAX_INLINE_LEN {
-                let mut data: u64 = (INLINE_TAG as u64) | ((len as u64) << LEN_OFFSET);
-                {
-                    let dest = inline_atom_slice_mut(&mut data);
-                    dest[..len].copy_from_slice(string_to_add.as_bytes())
+
+                let mut data: u64 = 0;
+                let dest = inline_atom_slice_mut(&mut data);
+                dest[..len].copy_from_slice(string_to_add.as_bytes());
+
+                // unicase 'inline patch
+                for i in 0..len {
+                    dest[i] = dest[i].to_ascii_lowercase()
                 }
+
+                data |= INLINE_TAG as u64;
+                data |= (len as u64) << LEN_OFFSET;
+
                 Atom {
                     // INLINE_TAG ensures this is never zero
                     unsafe_data: unsafe { NonZeroU64::new_unchecked(data) },
@@ -338,18 +346,20 @@ impl<Static: StaticAtomSet> Atom<Static> {
         self.clone()
     }
 
-    /// Like [`eq_ignore_ascii_case`].
-    ///
-    /// [`eq_ignore_ascii_case`]: https://doc.rust-lang.org/std/ascii/trait.AsciiExt.html#tymethod.eq_ignore_ascii_case
-    pub fn eq_ignore_ascii_case(&self, other: &Self) -> bool {
-        (self == other) || self.eq_str_ignore_ascii_case(&**other)
-    }
+    // This function makes no sense when having a unicase cache already
+    // /// Like [`eq_ignore_ascii_case`].
+    // ///
+    // /// [`eq_ignore_ascii_case`]: https://doc.rust-lang.org/std/ascii/trait.AsciiExt.html#tymethod.eq_ignore_ascii_case
+    // pub fn eq_ignore_ascii_case(&self, other: &Self) -> bool {
+    //     (self == other) || self.eq_str_ignore_ascii_case(&**other)
+    // }
 
     /// Like [`eq_ignore_ascii_case`], but takes an unhashed string as `other`.
     ///
     /// [`eq_ignore_ascii_case`]: https://doc.rust-lang.org/std/ascii/trait.AsciiExt.html#tymethod.eq_ignore_ascii_case
     pub fn eq_str_ignore_ascii_case(&self, other: &str) -> bool {
-        (&**self).eq_ignore_ascii_case(other)
+        unicase::eq_ascii(&**self, other)
+        // (&**self).eq_ignore_ascii_case(other)
     }
 }
 

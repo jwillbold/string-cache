@@ -1,7 +1,7 @@
 [package]
 name = "integration_tests"
 version = "0.0.1"
-authors = [ "The Servo Project Developers" ]
+authors = [ "The Servo Project Developers", "Johannes Willbold <johannes.willbold@gmail.com>" ]
 build = "build.rs"
 publish = false
 edition = "2018"
@@ -16,11 +16,11 @@ test = true
 unstable = []
 
 [dependencies]
-string_cache = { version = "0.8", path = ".." }
+unicase_string_cache = { version = "0.8", path = ".." }
 
 [dev-dependencies]
 rand = "0.7"
-string_cache_codegen = { version = "0.5", path = "../string-cache-codegen" }
+unicase_string_cache_codegen = { version = "0.5", path = "../string-cache-codegen" }
 
 [build-dependencies]
-string_cache_codegen = { version = "0.5", path = "../string-cache-codegen" }
+unicase_string_cache_codegen = { version = "0.5", path = "../string-cache-codegen" }

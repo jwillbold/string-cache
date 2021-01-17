@@ -27,19 +27,19 @@ impl<'a, Static: StaticAtomSet> From<&'a Atom<Static>> for Atom<Static> {
 
 impl<Static: StaticAtomSet> PartialEq<str> for Atom<Static> {
     fn eq(&self, other: &str) -> bool {
-        &self[..] == other
+        unicase::eq_ascii(&self[..], other)
     }
 }
 
 impl<Static: StaticAtomSet> PartialEq<Atom<Static>> for str {
     fn eq(&self, other: &Atom<Static>) -> bool {
-        self == &other[..]
+        unicase::eq_ascii(self, &other[..])
     }
 }
 
 impl<Static: StaticAtomSet> PartialEq<String> for Atom<Static> {
     fn eq(&self, other: &String) -> bool {
-        &self[..] == &other[..]
+        unicase::eq_ascii(&self[..], &other[..])
     }
 }
 

@@ -56,7 +56,8 @@ impl Set {
             let mut ptr: Option<&mut Box<Entry>> = self.buckets[bucket_index].as_mut();
 
             while let Some(entry) = ptr.take() {
-                if entry.hash == hash && &*entry.string == &*string {
+                // UniCase fix for 'dynamic' atoms
+                if entry.hash == hash && unicase::eq_ascii(&*entry.string, &*string) {
                     if entry.ref_count.fetch_add(1, SeqCst) > 0 {
                         return NonNull::from(&mut **entry);
                     }

@@ -1,10 +1,6 @@
-# string-cache
+# unicase string-cache
 
-[![Build Status](https://travis-ci.com/servo/string-cache.svg?branch=master)](https://travis-ci.com/servo/string-cache)
-
-[Documentation](https://docs.rs/string_cache/)
-
-A string interning library for Rust, developed as part of the [Servo](https://github.com/servo/servo) project.
+A fork of [Servo](https://github.com/servo/servo)'s string cache library. Each string compare in the library uses ascii-unicase comparison.
 
 ## Simple usage
 
@@ -12,13 +8,16 @@ In `Cargo.toml`:
 
 ```toml
 [dependencies]
-string_cache = "0.8"
+unicase_string_cache = "*"
+
+[dependencies.unicase_string_cache]
+git = "https://github.com/jwillbold/string-cache.git"
 ```
 
 In `lib.rs`:
 
 ```rust
-extern crate string_cache;
+extern crate unicase_string_cache;
 use string_cache::DefaultAtom as Atom;
 ```
 

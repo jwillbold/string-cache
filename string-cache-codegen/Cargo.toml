@@ -1,7 +1,7 @@
 [package]
-name = "string_cache_codegen"
+name = "unicase_string_cache_codegen"
 version = "0.5.1"  # Also update ../README.md when making a semver-breaking change
-authors = [ "The Servo Project Developers" ]
+authors = [ "The Servo Project Developers", "Johannes Willbold <johannes.willbold@gmail.com>" ]
 description = "A codegen library for string-cache, developed as part of the Servo project."
 license = "MIT / Apache-2.0"
 repository = "https://github.com/servo/string-cache"
@@ -9,11 +9,12 @@ documentation = "https://docs.rs/string_cache_codegen/"
 edition = "2018"
 
 [lib]
-name = "string_cache_codegen"
+name = "unicase_string_cache_codegen"
 path = "lib.rs"
 
 [dependencies]
 phf_generator = "0.8"
-phf_shared = "0.8"
+phf_shared = { version = "0.8", features = ["unicase"]}
 proc-macro2 = "1"
 quote = "1"
+unicase = "2.6"

@@ -81,7 +81,7 @@ pub struct AtomType {
     static_set_doc: Option<String>,
     macro_name: String,
     macro_doc: Option<String>,
-    atoms: HashSet<String>,
+    atoms: HashSet<unicase::UniCase<String>>,
 }
 
 impl AtomType {
@@ -148,19 +148,20 @@ impl AtomType {
     }
 
     /// Adds an atom to the builder
-    pub fn atom(&mut self, s: &str) -> &mut Self {
-        self.atoms.insert(s.to_owned());
+    pub fn ascii_atom(&mut self, s: &str) -> &mut Self {
+        self.atoms.insert(unicase::UniCase::ascii(s.to_owned()));
         self
     }
 
-    /// Adds multiple atoms to the builder
-    pub fn atoms<I>(&mut self, iter: I) -> &mut Self
+    /// Adds multiple unicase ascii atoms to the builder
+    pub fn ascii_atoms<I>(&mut self, iter: I) -> &mut Self
     where
         I: IntoIterator,
         I::Item: AsRef<str>,
     {
+
         self.atoms
-            .extend(iter.into_iter().map(|s| s.as_ref().to_owned()));
+            .extend(iter.into_iter().map(|s| unicase::UniCase::ascii(s.as_ref().to_owned())));
         self
     }
 
@@ -185,13 +186,13 @@ impl AtomType {
         // `impl Default for Atom` requires the empty string to be in the static set.
         // This also makes sure the set in non-empty,
         // which would cause divisions by zero in rust-phf.
-        self.atoms.insert(String::new());
+        self.atoms.insert(unicase::UniCase::new(String::new()));
 
-        let atoms: Vec<&str> = self.atoms.iter().map(|s| &**s).collect();
+        let atoms: Vec<&unicase::UniCase<String>> = self.atoms.iter().map(|s| s).collect();
         let hash_state = phf_generator::generate_hash(&atoms);
         let phf_generator::HashState { key, disps, map } = hash_state;
         let (disps0, disps1): (Vec<_>, Vec<_>) = disps.into_iter().unzip();
-        let atoms: Vec<&str> = map.iter().map(|&idx| atoms[idx]).collect();
+        let atoms: Vec<&unicase::UniCase<String>> = map.iter().map(|&idx| atoms[idx]).collect();
         let empty_string_index = atoms.iter().position(|s| s.is_empty()).unwrap() as u32;
         let indices = 0..atoms.len() as u32;
 
@@ -239,17 +240,19 @@ impl AtomType {
             })
             .collect();
 
+        let atoms: Vec<String> = atoms.iter().map(|u| (*u).clone().into_inner()).collect();
+
         quote! {
             #atom_doc
-            pub type #type_name = ::string_cache::Atom<#static_set_name>;
+            pub type #type_name = ::unicase_string_cache::Atom<#static_set_name>;
 
             #static_set_doc
             #[derive(PartialEq, Eq, PartialOrd, Ord)]
             pub struct #static_set_name;
 
-            impl ::string_cache::StaticAtomSet for #static_set_name {
-                fn get() -> &'static ::string_cache::PhfStrSet {
-                    static SET: ::string_cache::PhfStrSet = ::string_cache::PhfStrSet {
+            impl ::unicase_string_cache::StaticAtomSet for #static_set_name {
+                fn get() -> &'static ::unicase_string_cache::PhfStrSet {
+                    static SET: ::unicase_string_cache::PhfStrSet = ::unicase_string_cache::PhfStrSet {
                         key: #key,
                         disps: &[#((#disps0, #disps1)),*],
                         atoms: &[#(#atoms),*],
